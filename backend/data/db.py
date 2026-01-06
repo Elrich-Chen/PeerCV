@@ -81,7 +81,10 @@ class Rating(Base):
     score = Column(Integer, nullable=False) # 1 to 5
 
 
-engine = create_async_engine(DATABASE_URL)
+engine = create_async_engine(
+    DATABASE_URL,
+    pool_pre_ping=True
+    )
 
 if engine.url.drivername == "sqlite":
     @event.listens_for(engine.sync_engine, "connect")
