@@ -1,0 +1,17 @@
+[project]
+name = "commenting-feature"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "dotenv>=0.9.9",
+    "fastapi>=0.110",
+    "fastapi-users[sqlalchemy]>=15.0.3",
+    "imagekitio>=5.0.0",
+    "requests>=2.32",
+    "sqlalchemy>=2.0.45",
+    "streamlit>=1.31",
+    "uvicorn>=0.30",
+]

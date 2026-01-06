@@ -1,0 +1,23 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Ignore the Python virtual environment (too big)
+venv/
+.venv/
+__pycache__/
+
+# Ignore the Frontend libraries (too big)
+node_modules/
+.next/
+
+# Ignore SECRETS (Never upload these!)
+.env
+.DS_Store
