@@ -1,9 +1,18 @@
-export const DEFAULT_API_URL = "http://localhost:8000";
+export const normalizeUrl = (value = "") => value.trim().replace(/\/+$/, "");
+
+const DEFAULT_API_FALLBACK = "http://localhost:8000";
+
+const resolveDefaultApiUrl = () => {
+  const envValue =
+    typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_URL : "";
+  return normalizeUrl(envValue || DEFAULT_API_FALLBACK);
+};
+
+export const DEFAULT_API_URL = resolveDefaultApiUrl();
 const TOKEN_KEY = "authToken";
 const USER_KEY = "authUser";
 const AUTH_EVENT = "auth-changed";
 
-export const normalizeUrl = (value = "") => value.trim().replace(/\/+$/, "");
 
 const isBrowser = () => typeof window !== "undefined";
 
