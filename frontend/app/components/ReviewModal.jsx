@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ChevronLeft,
   ChevronRight,
@@ -123,6 +124,11 @@ export default function ReviewModal({
   onDeleted,
 }) {
   const dialogRef = useRef(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (typeof document === "undefined") {
@@ -170,7 +176,7 @@ export default function ReviewModal({
     }
   }, []);
 
-  if (!post) {
+  if (!post || !mounted) {
     return null;
   }
 
@@ -250,11 +256,22 @@ export default function ReviewModal({
     }
   };
 
-  return (
+  const modal = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4 py-6"
       onClick={onClose}
     >
+      <button
+        className="fixed right-4 top-4 z-[60] inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/95 text-muted-foreground shadow-[0_8px_20px_rgba(0,0,0,0.45)] transition hover:text-foreground"
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onClose();
+        }}
+        aria-label="Close review"
+      >
+        <X className="h-4 w-4" />
+      </button>
       <div
         className="relative h-full w-full max-w-6xl overflow-hidden rounded-2xl border border-border bg-background shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
         onClick={(event) => event.stopPropagation()}
@@ -263,15 +280,6 @@ export default function ReviewModal({
         tabIndex={-1}
         ref={dialogRef}
       >
-        <button
-          className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/90 text-muted-foreground transition hover:text-foreground"
-          type="button"
-          onClick={onClose}
-          aria-label="Close review"
-        >
-          <X className="h-4 w-4" />
-        </button>
-
         <button
           className="absolute left-2 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/90 text-muted-foreground transition hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
           type="button"
@@ -388,4 +396,6 @@ export default function ReviewModal({
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }
