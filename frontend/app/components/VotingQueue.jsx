@@ -16,7 +16,7 @@ const appendPdfControls = (fileUrl) => {
   if (fileUrl.includes("#")) {
     return fileUrl;
   }
-  return `${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`;
+  return `${fileUrl}#view=Fit&toolbar=0&navpanes=0&scrollbar=0`;
 };
 
 const getPdfViewerUrl = (fileUrl) => appendPdfControls(fileUrl);
@@ -316,10 +316,10 @@ export default function VotingQueue() {
           <span className="pill">{token ? "Up next" : "Preview"}</span>
         </div>
 
-        <div className="relative overflow-hidden rounded-lg border border-border bg-muted">
+        <div className="relative overflow-hidden rounded-lg border border-border bg-background">
           {shouldUseImage ? (
             <img
-              className="h-[520px] w-full object-cover bg-white sm:h-[600px] lg:h-[680px]"
+              className="h-[520px] w-full object-contain bg-white sm:h-[600px] lg:h-[680px]"
               src={previewImageUrl}
               alt={displayName}
               loading="lazy"
@@ -327,7 +327,7 @@ export default function VotingQueue() {
             />
           ) : previewUrl ? (
             <iframe
-              className="h-[520px] w-full sm:h-[600px] lg:h-[680px]"
+              className="h-[520px] w-full bg-white sm:h-[600px] lg:h-[680px]"
               src={previewUrl}
               title={displayName}
               loading="lazy"
