@@ -31,23 +31,27 @@ export default function Navbar() {
 
   const navItemClass = (href) =>
     [
-      "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition",
+      "inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs transition sm:px-4 sm:text-sm",
+      "whitespace-nowrap",
       pathname === href
         ? "bg-muted text-foreground"
         : "text-muted-foreground hover:bg-muted hover:text-foreground",
     ].join(" ");
 
+  const actionClass =
+    "inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground sm:px-4 sm:text-sm";
+
   return (
     <header className="sticky top-4 z-50">
       <div className="mx-auto max-w-6xl px-4">
-        <div className="flex flex-wrap items-center gap-4 rounded-full border border-border bg-card/90 px-6 py-3 shadow-[0_12px_30px_rgba(0,0,0,0.45)] backdrop-blur">
+        <div className="flex flex-col gap-3 rounded-3xl border border-border bg-card/90 px-4 py-3 shadow-[0_12px_30px_rgba(0,0,0,0.45)] backdrop-blur sm:flex-row sm:items-center sm:gap-4 sm:px-6">
           <Link
             href="/"
-            className="font-mono text-xs uppercase tracking-[0.3em] text-muted-foreground"
+            className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground sm:text-xs"
           >
-            Resume Community
+            Peer-CV
           </Link>
-          <nav className="flex flex-wrap items-center gap-2 md:flex-1 md:justify-center">
+          <nav className="flex w-full items-center gap-2 overflow-x-auto pb-1 sm:flex-1 sm:justify-center sm:overflow-visible sm:pb-0">
             <Link className={navItemClass("/feed")} href="/feed">
               Community
             </Link>
@@ -58,9 +62,9 @@ export default function Navbar() {
               Leaderboard
             </Link>
           </nav>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground md:ml-auto">
+          <div className="flex w-full items-center gap-2 overflow-x-auto pb-1 text-sm text-muted-foreground sm:ml-auto sm:w-auto sm:justify-end sm:overflow-visible sm:pb-0">
             <Link
-              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              className={actionClass}
               href="/upload"
             >
               <Plus className="h-4 w-4" />
@@ -69,13 +73,13 @@ export default function Navbar() {
             {token ? (
               <>
                 <Link
-                  className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                  className={actionClass}
                   href="/profile"
                 >
                   My Profile
                 </Link>
                 <button
-                  className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                  className={actionClass}
                   type="button"
                   onClick={clearAuthSession}
                 >
@@ -84,7 +88,7 @@ export default function Navbar() {
               </>
             ) : (
               <Link
-                className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                className={actionClass}
                 href="/login"
               >
                 Login

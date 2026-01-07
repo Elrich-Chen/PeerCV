@@ -14,7 +14,7 @@ export default function HomePage() {
     if (fileUrl.includes("#")) {
       return fileUrl;
     }
-    return `${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`;
+    return `${fileUrl}#view=FitH&zoom=page-width&toolbar=0&navpanes=0&scrollbar=0`;
   };
 
   useEffect(() => {
@@ -44,6 +44,7 @@ export default function HomePage() {
   const previewUrl = previewAvailable
     ? appendPdfControls("/resume-preview.pdf")
     : "";
+  const previewHeightClass = "h-[clamp(460px,70vh,760px)]";
   const previewName = previewAvailable ? "Sample resume" : "";
   const previewCaption = previewAvailable ? "Example resume preview." : "";
 
@@ -118,13 +119,15 @@ export default function HomePage() {
             <div className="bg-background">
               {previewUrl ? (
                 <iframe
-                  className="h-[520px] w-full sm:h-[600px] lg:h-[680px]"
+                  className={`${previewHeightClass} w-full bg-white`}
                   src={previewUrl}
                   title={previewName || "Resume preview"}
                   loading="lazy"
                 />
               ) : (
-                <div className="flex h-[520px] flex-col items-center justify-center gap-3 text-sm text-muted-foreground sm:h-[600px] lg:h-[680px]">
+                <div
+                  className={`flex ${previewHeightClass} flex-col items-center justify-center gap-3 text-sm text-muted-foreground`}
+                >
                   <span>Add `resume-preview.pdf` to the public folder.</span>
                 </div>
               )}
