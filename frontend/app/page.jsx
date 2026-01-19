@@ -41,6 +41,7 @@ export default function HomePage() {
     };
   }, []);
 
+
   const previewUrl = previewAvailable
     ? appendPdfControls("/resume-preview.pdf")
     : "";

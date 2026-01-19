@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   clearAuthSession,
@@ -16,6 +16,8 @@ import {
 export default function Navbar() {
   const [token, setToken] = useState("");
   const [user, setUser] = useState(null);
+  const updateId = "upload-fix-2026-01-07";
+  const [showUpdate, setShowUpdate] = useState(true);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -28,6 +30,18 @@ export default function Navbar() {
     validateSession(DEFAULT_API_URL).then(() => sync());
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const dismissed = window.localStorage.getItem(
+      `peerCVUpdateDismissed:${updateId}`
+    );
+    if (dismissed === "true") {
+      setShowUpdate(false);
+    }
+  }, [updateId]);
 
   const navItemClass = (href) =>
     [
@@ -96,6 +110,37 @@ export default function Navbar() {
             )}
           </div>
         </div>
+        {showUpdate ? (
+          <div className="mt-3 overflow-hidden rounded-full border border-border bg-card/80 px-4 py-2 text-xs text-muted-foreground backdrop-blur">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-background/70 px-2.5 py-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-mono">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse"></span>
+                Update
+              </span>
+              <div className="relative flex-1 overflow-hidden">
+                <div className="ticker-track inline-flex items-center gap-4 whitespace-nowrap pr-6">
+                  <span>Upload fix deployed. New resumes publish cleanly now.</span>
+                </div>
+              </div>
+              <button
+                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition hover:text-foreground"
+                type="button"
+                aria-label="Dismiss update"
+                onClick={() => {
+                  setShowUpdate(false);
+                  if (typeof window !== "undefined") {
+                    window.localStorage.setItem(
+                      `peerCVUpdateDismissed:${updateId}`,
+                      "true"
+                    );
+                  }
+                }}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </header>
   );
