@@ -12,6 +12,7 @@ export default function UploadPage() {
   const [file, setFile] = useState(null);
   const [caption, setCaption] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState(null);
   const fileRef = useRef(null);
 
   const apiBase = DEFAULT_API_URL;
@@ -36,6 +37,10 @@ export default function UploadPage() {
   const handleUpload = async (event) => {
     event.preventDefault();
 
+    if (uploading || uploadStatus?.type === "success") {
+      return;
+    }
+
     if (!token) {
       toast.error("Sign in to upload resumes.");
       return;
@@ -47,6 +52,7 @@ export default function UploadPage() {
     }
 
     try {
+      setUploadStatus(null);
       setUploading(true);
       const formData = new FormData();
       formData.append("file", file);
@@ -66,14 +72,24 @@ export default function UploadPage() {
       }
 
       toast.success("Resume uploaded.");
+      setUploadStatus({
+        type: "success",
+        message: "Resume uploaded. Redirecting to the community...",
+      });
       setFile(null);
       setCaption("");
       if (fileRef.current) {
         fileRef.current.value = "";
       }
-      router.push("/feed");
+      setTimeout(() => {
+        router.push("/feed");
+      }, 800);
     } catch (error) {
       toast.error("Could not upload resume.");
+      setUploadStatus({
+        type: "error",
+        message: "Upload failed. Please try again.",
+      });
     } finally {
       setUploading(false);
     }
@@ -107,9 +123,10 @@ export default function UploadPage() {
               className="input"
               type="file"
               accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              onChange={(event) =>
-                setFile(event.target.files ? event.target.files[0] : null)
-              }
+              onChange={(event) => {
+                setFile(event.target.files ? event.target.files[0] : null);
+                setUploadStatus(null);
+              }}
             />
           </label>
           <label className="space-y-2 text-sm text-muted-foreground">
@@ -117,18 +134,36 @@ export default function UploadPage() {
             <input
               className="input"
               value={caption}
-              onChange={(event) => setCaption(event.target.value)}
+              onChange={(event) => {
+                setCaption(event.target.value);
+                setUploadStatus(null);
+              }}
               placeholder="e.g., Product designer resume"
             />
           </label>
           <div className="flex flex-wrap items-center gap-3">
-            <button className="btn-primary" type="submit" disabled={uploading}>
+            <button
+              className="btn-primary"
+              type="submit"
+              disabled={uploading || !file || uploadStatus?.type === "success"}
+            >
               {uploading ? "Uploading..." : "Publish post"}
             </button>
             <Link className="btn-ghost" href="/feed">
               Back to community
             </Link>
           </div>
+          {uploadStatus ? (
+            <div
+              className={`rounded-md border px-3 py-2 text-sm ${
+                uploadStatus.type === "success"
+                  ? "border-emerald-500/40 text-emerald-300"
+                  : "border-red-500/40 text-red-300"
+              }`}
+            >
+              {uploadStatus.message}
+            </div>
+          ) : null}
         </form>
       )}
     </section>

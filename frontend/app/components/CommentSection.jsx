@@ -40,6 +40,7 @@ export default function CommentSection({
   const [replyTo, setReplyTo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const textareaRef = useRef(null);
+  const isModal = layout === "modal";
 
   const isReady = body.trim().length > 0;
   const authUser = getAuthUser();
@@ -51,6 +52,13 @@ export default function CommentSection({
     }
     return "btn-ghost text-muted-foreground";
   }, [isReady]);
+
+  const commentCardClass = (optimistic) =>
+    [
+      "rounded-xl border border-border px-4 py-3",
+      isModal ? "bg-muted/30" : "bg-background",
+      optimistic ? "opacity-70" : "",
+    ].join(" ");
 
   const commentsByParent = useMemo(() => {
     const map = new Map();
@@ -229,11 +237,7 @@ export default function CommentSection({
         key={commentId}
         className={`space-y-3 ${hasIndent ? "ml-8 border-l-2 border-zinc-800 pl-4" : ""}`}
       >
-        <div
-          className={`rounded-lg border border-border bg-background px-4 py-3 ${
-            comment.optimistic ? "opacity-75" : ""
-          }`}
-        >
+        <div className={commentCardClass(comment.optimistic)}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-semibold text-foreground">
@@ -248,7 +252,7 @@ export default function CommentSection({
             <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-mono">
               <span>{formatTimestamp(comment.created_at)}</span>
               <button
-                className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition hover:text-accent"
+                className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition hover:text-foreground"
                 type="button"
                 onClick={() => handleReply(comment)}
                 disabled={comment.optimistic}
@@ -260,7 +264,7 @@ export default function CommentSection({
               commentOwnerName &&
               commentOwnerName === currentUsername ? (
                 <button
-                  className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition hover:text-accent"
+                  className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition hover:text-foreground"
                   type="button"
                   onClick={() => handleDelete(comment.id)}
                   disabled={comment.optimistic}
@@ -270,7 +274,9 @@ export default function CommentSection({
               ) : null}
             </div>
           </div>
-          <p className="mt-2 text-sm text-foreground">{comment.body}</p>
+          <p className="mt-2 text-sm leading-relaxed text-foreground">
+            {comment.body}
+          </p>
         </div>
 
         {replies.length > 0 ? (
@@ -284,7 +290,9 @@ export default function CommentSection({
 
   const commentHeader = (
     <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground font-mono">
-      <span>Comments</span>
+      <span>
+        Comments {comments.length ? `(${comments.length})` : ""}
+      </span>
       <button
         className="btn-ghost px-2 py-1 text-[10px]"
         type="button"
@@ -331,7 +339,9 @@ export default function CommentSection({
         ) : null}
         <textarea
           ref={textareaRef}
-          className="textarea min-h-[80px] resize-none border-zinc-800"
+          className={`textarea min-h-[90px] resize-none border-zinc-800 ${
+            isModal ? "rounded-xl bg-background/80" : ""
+          }`}
           placeholder="Write a helpful note..."
           value={body}
           onInput={handleInput}
@@ -355,7 +365,11 @@ export default function CommentSection({
       return <p className="text-sm text-muted-foreground">Loading comments...</p>;
     }
     if (rootComments.length === 0) {
-      return <p className="text-sm text-muted-foreground">No comments yet.</p>;
+      return (
+        <div className="rounded-lg border border-dashed border-border bg-muted/40 px-4 py-6 text-sm text-muted-foreground">
+          Be the first to leave feedback.
+        </div>
+      );
     }
     return (
       <div className="space-y-4">
@@ -366,7 +380,7 @@ export default function CommentSection({
 
   if (layout === "modal") {
     const loginPrompt = !token ? (
-      <div className="rounded-lg border border-dashed border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
+      <div className="rounded-lg border border-dashed border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
         Sign in to add and manage comments.{" "}
         <Link className="text-accent hover:opacity-80" href="/login">
           Login

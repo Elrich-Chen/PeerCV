@@ -141,6 +141,45 @@ export default function HomePage() {
 
       <FeatureGrid />
 
+      <section className="rounded-2xl border border-border bg-card/40 px-6 py-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-mono">
+              Contact
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Find me online for updates and collaborations.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <a
+              className="text-muted-foreground underline decoration-border underline-offset-4 transition hover:text-foreground hover:decoration-accent"
+              href="https://elrichchen.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Website
+            </a>
+            <a
+              className="text-muted-foreground underline decoration-border underline-offset-4 transition hover:text-foreground hover:decoration-accent"
+              href="https://github.com/Elrich-Chen"
+              target="_blank"
+              rel="noreferrer"
+            >
+              GitHub
+            </a>
+            <a
+              className="text-muted-foreground underline decoration-border underline-offset-4 transition hover:text-foreground hover:decoration-accent"
+              href="https://www.linkedin.com/in/elrich-chen/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              LinkedIn
+            </a>
+          </div>
+        </div>
+      </section>
+
       <footer className="border-t border-border pt-8 pb-4 text-sm text-muted-foreground">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p>© 2026 Elrich Chen. All rights reserved.</p>
