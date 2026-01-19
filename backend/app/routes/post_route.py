@@ -245,7 +245,8 @@ async def upload_post(
                         if user.job_title 
                         else f"{user.program}, Year {user.year_of_study}"
                     )
-                }
+                },
+            created_at=post.created_at
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
