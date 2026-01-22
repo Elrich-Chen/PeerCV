@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   clearAuthSession,
   DEFAULT_API_URL,
@@ -18,6 +18,9 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const updateId = "upload-fix-2026-01-07";
   const [showUpdate, setShowUpdate] = useState(true);
+  const [isHidden, setIsHidden] = useState(false);
+  const lastScrollY = useRef(0);
+  const ticking = useRef(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -29,6 +32,40 @@ export default function Navbar() {
     const unsubscribe = onAuthChange(sync);
     validateSession(DEFAULT_API_URL).then(() => sync());
     return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    lastScrollY.current = window.scrollY;
+
+    const handleScroll = () => {
+      if (ticking.current) {
+        return;
+      }
+      ticking.current = true;
+
+      window.requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const delta = currentY - lastScrollY.current;
+
+        if (currentY < 40) {
+          setIsHidden(false);
+        } else if (delta > 8) {
+          setIsHidden(true);
+        } else if (delta < -8) {
+          setIsHidden(false);
+        }
+
+        lastScrollY.current = currentY;
+        ticking.current = false;
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
@@ -56,7 +93,11 @@ export default function Navbar() {
     "inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground sm:px-4 sm:text-sm";
 
   return (
-    <header className="sticky top-4 z-50">
+    <header
+      className={`sticky top-4 z-50 transition-transform duration-200 ${
+        isHidden ? "-translate-y-24 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
+      }`}
+    >
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex flex-col gap-3 rounded-3xl border border-border bg-card/90 px-4 py-3 shadow-[0_12px_30px_rgba(0,0,0,0.45)] backdrop-blur sm:flex-row sm:items-center sm:gap-4 sm:px-6">
           <Link
