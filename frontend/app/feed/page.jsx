@@ -14,7 +14,6 @@ export default function FeedPage() {
   const [activeIndex, setActiveIndex] = useState(null);
   const lastUrlRef = useRef("");
   const urlSyncRef = useRef(null);
-  const [imageFallback, setImageFallback] = useState({});
 
   const apiBase = DEFAULT_API_URL;
 
@@ -315,6 +314,134 @@ export default function FeedPage() {
     });
   };
 
+  const FeedCard = ({ post, index }) => {
+    const cardRef = useRef(null);
+    const [isVisible, setIsVisible] = useState(false);
+    const [imageFailed, setImageFailed] = useState(false);
+
+    useEffect(() => {
+      if (isVisible) {
+        return undefined;
+      }
+      if (typeof window === "undefined") {
+        return undefined;
+      }
+      const node = cardRef.current;
+      if (!node) {
+        return undefined;
+      }
+      if (!("IntersectionObserver" in window)) {
+        setIsVisible(true);
+        return undefined;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          if (entry?.isIntersecting) {
+            setIsVisible(true);
+            observer.disconnect();
+          }
+        },
+        { rootMargin: "200px" }
+      );
+
+      observer.observe(node);
+      return () => observer.disconnect();
+    }, [isVisible]);
+
+    const previewImageUrl = isVisible
+      ? getPreviewImageUrl(post.url, post.file_type, post.file_name)
+      : null;
+    const previewUrl = isVisible
+      ? getPreviewUrl(post.url, post.file_type, post.file_name)
+      : null;
+    const shouldUseImage = previewImageUrl && !imageFailed;
+
+    const owner = post.owner || {};
+    const ownerMeta = [owner.headline, owner.organization]
+      .filter(Boolean)
+      .join(" • ");
+    const formattedDate = formatPostDate(post.created_at);
+    const displayName = cleanFileName(post.file_name || extractFileName(post.url));
+    const ratingValue =
+      typeof post.average_rating === "number" ? post.average_rating.toFixed(1) : "0.0";
+    const votesValue = typeof post.vote_count === "number" ? post.vote_count : 0;
+
+    return (
+      <button
+        ref={cardRef}
+        key={post.post_id}
+        id={`post-${post.post_id}`}
+        className="group card flex h-full flex-col p-4 text-left transition hover:border-accent/40 focus:outline-none focus:ring-1 focus:ring-accent"
+        type="button"
+        onClick={() => setActiveIndex(index)}
+      >
+        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg border border-border bg-muted">
+          {!isVisible ? (
+            <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+              Loading preview...
+            </div>
+          ) : shouldUseImage ? (
+            <img
+              className="h-full w-full object-cover bg-white"
+              src={previewImageUrl}
+              alt={`${displayName} preview`}
+              loading="lazy"
+              onError={() => setImageFailed(true)}
+            />
+          ) : previewUrl ? (
+            <iframe
+              className="h-full w-full pointer-events-none"
+              src={previewUrl}
+              title={`${displayName} preview`}
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+              No preview
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
+          <div className="pointer-events-none absolute bottom-3 left-3 right-3">
+            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-foreground/90 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-background opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
+              Open review
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-1 flex-col gap-2">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                @{owner.username || post.username || "anonymous"}
+              </p>
+              {ownerMeta ? (
+                <p className="text-xs text-muted-foreground">{ownerMeta}</p>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Star className="h-3 w-3 text-accent" />
+              <span className="text-foreground">{ratingValue}</span>
+              <span>({votesValue})</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-sm text-foreground">{displayName}</p>
+            {post.caption ? (
+              <p className="text-xs text-muted-foreground">{post.caption}</p>
+            ) : null}
+          </div>
+          {formattedDate ? (
+            <p className="mt-auto text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-mono">
+              {formattedDate}
+            </p>
+          ) : null}
+        </div>
+      </button>
+    );
+  };
+
   return (
     <section className="space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -354,110 +481,9 @@ export default function FeedPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {posts.map((post, index) => {
-            const previewImageUrl = getPreviewImageUrl(
-              post.url,
-              post.file_type,
-              post.file_name
-            );
-            const previewUrl = getPreviewUrl(
-              post.url,
-              post.file_type,
-              post.file_name
-            );
-            const owner = post.owner || {};
-            const ownerMeta = [owner.headline, owner.organization]
-              .filter(Boolean)
-              .join(" • ");
-            const formattedDate = formatPostDate(post.created_at);
-            const displayName = cleanFileName(
-              post.file_name || extractFileName(post.url)
-            );
-            const ratingValue =
-              typeof post.average_rating === "number"
-                ? post.average_rating.toFixed(1)
-                : "0.0";
-            const votesValue =
-              typeof post.vote_count === "number" ? post.vote_count : 0;
-
-            const shouldUseImage =
-              previewImageUrl && !imageFallback[post.post_id];
-
-            return (
-              <button
-                key={post.post_id}
-                id={`post-${post.post_id}`}
-                className="group card flex h-full flex-col p-4 text-left transition hover:border-accent/40 focus:outline-none focus:ring-1 focus:ring-accent"
-                type="button"
-                onClick={() => setActiveIndex(index)}
-              >
-                <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg border border-border bg-muted">
-                  {shouldUseImage ? (
-                    <img
-                      className="h-full w-full object-cover bg-white"
-                      src={previewImageUrl}
-                      alt={`${displayName} preview`}
-                      loading="lazy"
-                      onError={() =>
-                        setImageFallback((prev) => ({
-                          ...prev,
-                          [post.post_id]: true,
-                        }))
-                      }
-                    />
-                  ) : previewUrl ? (
-                    <iframe
-                      className="h-full w-full pointer-events-none"
-                      src={previewUrl}
-                      title={`${displayName} preview`}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
-                      No preview
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
-                  <div className="pointer-events-none absolute bottom-3 left-3 right-3">
-                    <span className="inline-flex items-center gap-2 rounded-full border border-border bg-foreground/90 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-background opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
-                      Open review
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex flex-1 flex-col gap-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        @{owner.username || post.username || "anonymous"}
-                      </p>
-                      {ownerMeta ? (
-                        <p className="text-xs text-muted-foreground">{ownerMeta}</p>
-                      ) : null}
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Star className="h-3 w-3 text-accent" />
-                      <span className="text-foreground">{ratingValue}</span>
-                      <span>({votesValue})</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-foreground">{displayName}</p>
-                    {post.caption ? (
-                      <p className="text-xs text-muted-foreground">
-                        {post.caption}
-                      </p>
-                    ) : null}
-                  </div>
-                  {formattedDate ? (
-                    <p className="mt-auto text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-mono">
-                      {formattedDate}
-                    </p>
-                  ) : null}
-                </div>
-              </button>
-            );
-          })}
+          {posts.map((post, index) => (
+            <FeedCard key={post.post_id} post={post} index={index} />
+          ))}
         </div>
       )}
       {activePost ? (

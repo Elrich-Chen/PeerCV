@@ -7,6 +7,7 @@ import FeatureGrid from "./components/FeatureGrid";
 
 export default function HomePage() {
   const [previewAvailable, setPreviewAvailable] = useState(true);
+  const [shouldLoadPreview, setShouldLoadPreview] = useState(false);
   const appendPdfControls = (fileUrl) => {
     if (!fileUrl) {
       return fileUrl;
@@ -18,6 +19,36 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+    let cancelled = false;
+
+    const startLoading = () => {
+      if (!cancelled) {
+        setShouldLoadPreview(true);
+      }
+    };
+
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(startLoading, { timeout: 1000 });
+      return () => {
+        cancelled = true;
+        window.cancelIdleCallback?.(id);
+      };
+    }
+
+    const timeoutId = window.setTimeout(startLoading, 250);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!shouldLoadPreview) {
+      return undefined;
+    }
     let active = true;
     const checkFallback = async () => {
       try {
@@ -39,12 +70,12 @@ export default function HomePage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [shouldLoadPreview]);
 
-
-  const previewUrl = previewAvailable
-    ? appendPdfControls("/resume-preview.pdf")
-    : "";
+  const previewUrl =
+    shouldLoadPreview && previewAvailable
+      ? appendPdfControls("/resume-preview.pdf")
+      : "";
   const previewHeightClass = "h-[clamp(460px,70vh,760px)]";
   const previewName = previewAvailable ? "Sample resume" : "";
   const previewCaption = previewAvailable ? "Example resume preview." : "";
@@ -118,7 +149,13 @@ export default function HomePage() {
               </span>
             </div>
             <div className="bg-background">
-              {previewUrl ? (
+              {!shouldLoadPreview ? (
+                <div
+                  className={`flex ${previewHeightClass} items-center justify-center text-sm text-muted-foreground`}
+                >
+                  Loading preview...
+                </div>
+              ) : previewUrl ? (
                 <iframe
                   className={`${previewHeightClass} w-full bg-white`}
                   src={previewUrl}

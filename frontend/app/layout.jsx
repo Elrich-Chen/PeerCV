@@ -7,12 +7,14 @@ import PageTransition from "./components/PageTransition";
 const interTight = Inter_Tight({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
   variable: "--font-sans",
 });
 
 const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "600"],
+  display: "swap",
   variable: "--font-mono",
 });
 
