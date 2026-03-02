@@ -1,0 +1,13 @@
+name: Keepalive Ping
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /docs
+        run: curl -f --max-time 10 "https://peercv.onrender.com/docs"
