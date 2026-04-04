@@ -2,14 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { Loader2, Star } from "lucide-react";
 import { toast } from "sonner";
 import { DEFAULT_API_URL, getToken, onAuthChange, validateSession } from "../auth";
 import ReviewModal from "../components/ReviewModal";
+import { FeedGridSkeleton } from "../components/LoadingSkeleton";
 
 export default function FeedPage() {
   const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [token, setToken] = useState("");
   const [activeIndex, setActiveIndex] = useState(null);
   const lastUrlRef = useRef("");
@@ -151,8 +153,12 @@ export default function FeedPage() {
     });
   };
 
-  const loadPosts = async () => {
-    setLoading(true);
+  const loadPosts = async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setInitialLoading(true);
+    }
     try {
       const response = await fetch(`${apiBase}/posts/`);
       if (!response.ok) {
@@ -164,7 +170,11 @@ export default function FeedPage() {
     } catch (error) {
       toast.error("Could not load the community.");
     } finally {
-      setLoading(false);
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
+        setInitialLoading(false);
+      }
     }
   };
 
@@ -220,12 +230,12 @@ export default function FeedPage() {
   };
 
   useEffect(() => {
-    if (loading) {
+    if (initialLoading) {
       return;
     }
     openFromLocation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, posts]);
+  }, [initialLoading, posts]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -412,24 +422,24 @@ export default function FeedPage() {
 
         <div className="mt-3 flex flex-1 flex-col gap-2">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-foreground">
+            <div className="min-w-0 flex-1">
+              <p className="break-words text-sm font-semibold text-foreground">
                 @{owner.username || post.username || "anonymous"}
               </p>
               {ownerMeta ? (
-                <p className="text-xs text-muted-foreground">{ownerMeta}</p>
+                <p className="break-words text-xs text-muted-foreground">{ownerMeta}</p>
               ) : null}
             </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Star className="h-3 w-3 text-accent" />
+            <div className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+              <Star className="h-3 w-3 shrink-0 text-accent" />
               <span className="text-foreground">{ratingValue}</span>
               <span>({votesValue})</span>
             </div>
           </div>
-          <div>
-            <p className="text-sm text-foreground">{displayName}</p>
+          <div className="min-w-0">
+            <p className="break-words text-sm text-foreground">{displayName}</p>
             {post.caption ? (
-              <p className="text-xs text-muted-foreground">{post.caption}</p>
+              <p className="break-words text-xs text-muted-foreground">{post.caption}</p>
             ) : null}
           </div>
           {formattedDate ? (
@@ -443,7 +453,10 @@ export default function FeedPage() {
   };
 
   return (
-    <section className="space-y-8">
+    <section
+      className="space-y-8"
+      aria-busy={initialLoading || refreshing}
+    >
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-mono">
@@ -460,16 +473,27 @@ export default function FeedPage() {
           <Link className="btn-primary" href="/upload">
             New post
           </Link>
-          <button className="btn-ghost" type="button" onClick={loadPosts}>
-            Refresh
+          <button
+            className="btn-ghost"
+            type="button"
+            onClick={() => loadPosts(true)}
+            disabled={refreshing || initialLoading}
+            aria-busy={refreshing}
+          >
+            {refreshing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Refreshing…
+              </>
+            ) : (
+              "Refresh"
+            )}
           </button>
         </div>
       </header>
 
-      {loading ? (
-        <div className="card px-5 py-6 text-sm text-muted-foreground">
-          Loading community...
-        </div>
+      {initialLoading ? (
+        <FeedGridSkeleton />
       ) : posts.length === 0 ? (
         <div className="card px-5 py-6">
           <p className="text-sm text-muted-foreground">
@@ -480,7 +504,9 @@ export default function FeedPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div
+          className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${refreshing ? "opacity-90 transition-opacity" : ""}`}
+        >
           {posts.map((post, index) => (
             <FeedCard key={post.post_id} post={post} index={index} />
           ))}

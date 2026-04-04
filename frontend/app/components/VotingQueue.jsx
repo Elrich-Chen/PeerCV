@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { DEFAULT_API_URL, getToken, onAuthChange, validateSession } from "../auth";
+import { VotingQueueSkeleton } from "./LoadingSkeleton";
 
 const ratingOptions = [1, 2, 3, 4, 5];
 
@@ -267,11 +268,7 @@ export default function VotingQueue() {
   }, [previewKey]);
 
   if (loading && token) {
-    return (
-      <div className="card px-5 py-6 text-sm text-muted-foreground">
-        Loading votes...
-      </div>
-    );
+    return <VotingQueueSkeleton />;
   }
 
   if (token && queue.length === 0) {
@@ -299,21 +296,21 @@ export default function VotingQueue() {
       ) : null}
       <div className="card space-y-5 px-5 py-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-foreground">
+          <div className="min-w-0 flex-1">
+            <p className="break-words text-sm font-semibold text-foreground">
               @{owner.username || "anonymous"}
             </p>
             {ownerMeta ? (
-              <p className="text-xs text-muted-foreground">{ownerMeta}</p>
+              <p className="break-words text-xs text-muted-foreground">{ownerMeta}</p>
             ) : null}
-            <p className="mt-2 text-sm text-muted-foreground">{displayName}</p>
+            <p className="mt-2 break-words text-sm text-muted-foreground">{displayName}</p>
             {displayPost.caption ? (
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 break-words text-sm text-muted-foreground">
                 {displayPost.caption}
               </p>
             ) : null}
           </div>
-          <span className="pill">{token ? "Up next" : "Preview"}</span>
+          <span className="pill shrink-0">{token ? "Up next" : "Preview"}</span>
         </div>
 
         <div className="relative overflow-hidden rounded-lg border border-border bg-background">

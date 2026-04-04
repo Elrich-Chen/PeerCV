@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { DEFAULT_API_URL, getToken, onAuthChange, validateSession } from "../auth";
 import PostCard from "../components/PostCard";
+import { ProfilePostListSkeleton } from "../components/LoadingSkeleton";
 
 export default function ProfilePage() {
   const [token, setToken] = useState("");
@@ -120,7 +121,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-8" aria-busy={Boolean(token && loading)}>
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-mono">
           My Profile
@@ -139,9 +140,7 @@ export default function ProfilePage() {
           </Link>
         </div>
       ) : loading ? (
-        <div className="card px-5 py-6 text-sm text-muted-foreground">
-          Loading your posts...
-        </div>
+        <ProfilePostListSkeleton />
       ) : isEmpty ? (
         <div className="card px-5 py-6">
           <p className="text-sm text-muted-foreground">

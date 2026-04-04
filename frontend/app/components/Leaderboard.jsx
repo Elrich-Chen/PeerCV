@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Medal, Star, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { DEFAULT_API_URL } from "../auth";
+import { LeaderboardSkeleton } from "./LoadingSkeleton";
 
 const formatRating = (value) => {
   if (typeof value !== "number") {
@@ -133,11 +134,7 @@ export default function Leaderboard() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="card px-5 py-6 text-sm text-muted-foreground">
-        Loading leaderboard...
-      </div>
-    );
+    return <LeaderboardSkeleton />;
   }
 
   if (posts.length === 0) {
@@ -238,14 +235,14 @@ export default function Leaderboard() {
                     )}
                   </div>
                 </div>
-                <div className="mt-5 text-center">
-                  <p className="text-base font-semibold text-foreground">
+                <div className="mt-5 min-w-0 text-center">
+                  <p className="break-words text-base font-semibold text-foreground">
                     @{owner.username || "anonymous"}
                   </p>
                   {ownerMeta ? (
-                    <p className="text-xs text-muted-foreground">{ownerMeta}</p>
+                    <p className="break-words text-xs text-muted-foreground">{ownerMeta}</p>
                   ) : null}
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="mt-2 break-words text-sm text-muted-foreground">
                     {displayName}
                   </p>
                 </div>
@@ -311,18 +308,18 @@ export default function Leaderboard() {
                       Rank
                     </span>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
+                  <div className="min-w-0">
+                    <p className="break-words text-sm font-semibold text-foreground">
                       @{owner.username || "anonymous"}
                     </p>
                     {ownerMeta ? (
-                      <p className="text-xs text-muted-foreground">{ownerMeta}</p>
+                      <p className="break-words text-xs text-muted-foreground">{ownerMeta}</p>
                     ) : null}
-                    <p className="mt-2 text-sm text-muted-foreground">
+                    <p className="mt-2 break-words text-sm text-muted-foreground">
                       {displayName}
                     </p>
                     {post.caption ? (
-                      <p className="mt-2 text-sm text-muted-foreground">
+                      <p className="mt-2 break-words text-sm text-muted-foreground">
                         {post.caption}
                       </p>
                     ) : null}

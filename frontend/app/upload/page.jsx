@@ -14,6 +14,7 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState(null);
   const fileRef = useRef(null);
+  const inFlightRef = useRef(false);
 
   const apiBase = DEFAULT_API_URL;
 
@@ -52,7 +53,14 @@ export default function UploadPage() {
     }
 
     try {
-      setUploadStatus(null);
+      if (inFlightRef.current) {
+        return;
+      }
+      inFlightRef.current = true;
+      setUploadStatus({
+        type: "info",
+        message: "Uploading your resume. Please wait...",
+      });
       setUploading(true);
       const formData = new FormData();
       formData.append("file", file);
@@ -88,9 +96,11 @@ export default function UploadPage() {
       toast.error("Could not upload resume.");
       setUploadStatus({
         type: "error",
-        message: "Upload failed. Please try again.",
+        message:
+          "Upload failed. Check the community feed before retrying to avoid duplicates.",
       });
     } finally {
+      inFlightRef.current = false;
       setUploading(false);
     }
   };

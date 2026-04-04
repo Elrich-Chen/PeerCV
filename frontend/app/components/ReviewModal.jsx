@@ -326,23 +326,23 @@ export default function ReviewModal({
           <div className="flex h-[45vh] w-full flex-col border-t border-border bg-card/80 lg:h-full lg:w-[35%] lg:border-l lg:border-t-0">
             <div className="sticky top-0 z-10 border-b border-border bg-card/95 px-5 py-4 backdrop-blur">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">
+                <div className="min-w-0 flex-1">
+                  <p className="break-words text-sm font-semibold text-foreground">
                     @{postOwnerName}
                   </p>
                   {ownerMeta ? (
-                    <p className="text-xs text-muted-foreground">{ownerMeta}</p>
+                    <p className="break-words text-xs text-muted-foreground">{ownerMeta}</p>
                   ) : null}
-                  <h2 className="mt-2 text-lg font-semibold text-foreground">
+                  <h2 className="mt-2 break-words text-lg font-semibold text-foreground">
                     {displayName}
                   </h2>
                   {post.caption ? (
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-1 break-words text-sm text-muted-foreground">
                       {post.caption}
                     </p>
                   ) : null}
                 </div>
-                <div className="text-right">
+                <div className="shrink-0 text-right">
                   {formattedDate ? (
                     <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-mono">
                       {formattedDate}

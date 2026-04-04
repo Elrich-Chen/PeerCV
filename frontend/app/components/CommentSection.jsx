@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getAuthUser } from "../auth";
+import { CommentListSkeleton } from "./LoadingSkeleton";
 
 const formatTimestamp = (value) => {
   const date = value ? new Date(value) : new Date();
@@ -35,7 +37,8 @@ export default function CommentSection({
   layout = "default",
 }) {
   const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [body, setBody] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -75,8 +78,12 @@ export default function CommentSection({
 
   const rootComments = commentsByParent.get("root") || [];
 
-  const loadComments = async () => {
-    setLoading(true);
+  const loadComments = async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setInitialLoading(true);
+    }
     try {
       const response = await fetch(`${apiBase}/comments/${postId}`);
       if (!response.ok) {
@@ -92,7 +99,11 @@ export default function CommentSection({
     } catch (error) {
       toast.error("Could not load comments.");
     } finally {
-      setLoading(false);
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
+        setInitialLoading(false);
+      }
     }
   };
 
@@ -171,7 +182,7 @@ export default function CommentSection({
       }
 
       toast.success("Comment added.", { duration: 2000 });
-      await loadComments();
+      await loadComments(false);
     } catch (error) {
       setComments((prev) => prev.filter((item) => item.id !== optimistic.id));
       toast.error("Could not add comment.");
@@ -239,12 +250,12 @@ export default function CommentSection({
       >
         <div className={commentCardClass(comment.optimistic)}>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-semibold text-foreground">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <span className="break-words text-sm font-semibold text-foreground">
                 @{displayName}
               </span>
               {commentHeadline ? (
-                <span className="text-xs text-muted-foreground">
+                <span className="break-words text-xs text-muted-foreground">
                   {commentHeadline}
                 </span>
               ) : null}
@@ -274,7 +285,7 @@ export default function CommentSection({
               ) : null}
             </div>
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-foreground">
+          <p className="mt-2 break-words text-sm leading-relaxed text-foreground">
             {comment.body}
           </p>
         </div>
@@ -289,16 +300,34 @@ export default function CommentSection({
   };
 
   const commentHeader = (
-    <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground font-mono">
+    <div
+      className={`flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground font-mono ${
+        isModal ? "rounded-lg border border-border bg-muted/40 px-3 py-2" : ""
+      }`}
+    >
       <span>
         Comments {comments.length ? `(${comments.length})` : ""}
+        {refreshing ? (
+          <span className="ml-2 text-[10px] normal-case text-accent">
+            Updating…
+          </span>
+        ) : null}
       </span>
       <button
         className="btn-ghost px-2 py-1 text-[10px]"
         type="button"
-        onClick={loadComments}
+        onClick={() => loadComments(true)}
+        disabled={refreshing || initialLoading}
+        aria-busy={refreshing}
       >
-        Refresh
+        {refreshing ? (
+          <>
+            <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+            Refresh
+          </>
+        ) : (
+          "Refresh"
+        )}
       </button>
     </div>
   );
@@ -318,11 +347,13 @@ export default function CommentSection({
       );
     }
 
+    const formClass =
+      layout === "modal"
+        ? "space-y-3 rounded-xl border border-border bg-background/80 p-4"
+        : "card space-y-3 px-4 py-4";
+
     return (
-      <form
-        className={layout === "modal" ? "space-y-3" : "card space-y-3 px-4 py-4"}
-        onSubmit={handleSubmit}
-      >
+      <form className={formClass} onSubmit={handleSubmit}>
         {replyTo ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
             <span>
@@ -336,6 +367,11 @@ export default function CommentSection({
               Cancel
             </button>
           </div>
+        ) : null}
+        {layout === "modal" ? (
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-mono">
+            Add a comment
+          </p>
         ) : null}
         <textarea
           ref={textareaRef}
@@ -361,8 +397,8 @@ export default function CommentSection({
   };
 
   const renderList = () => {
-    if (loading) {
-      return <p className="text-sm text-muted-foreground">Loading comments...</p>;
+    if (initialLoading) {
+      return <CommentListSkeleton />;
     }
     if (rootComments.length === 0) {
       return (
@@ -372,7 +408,10 @@ export default function CommentSection({
       );
     }
     return (
-      <div className="space-y-4">
+      <div
+        className={`space-y-4 ${refreshing ? "opacity-90 transition-opacity" : ""}`}
+        aria-busy={refreshing}
+      >
         {rootComments.map((comment) => renderThread(comment, 0))}
       </div>
     );
@@ -388,13 +427,21 @@ export default function CommentSection({
       </div>
     ) : null;
     const formContent = renderForm();
+    const listContent = (
+      <div className="rounded-xl border border-border bg-background/60 p-4">
+        {renderList()}
+      </div>
+    );
 
     return (
-      <section className="flex h-full flex-col">
+      <section
+        className="flex h-full flex-col"
+        aria-busy={initialLoading || refreshing}
+      >
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {commentHeader}
           {loginPrompt}
-          {renderList()}
+          {listContent}
         </div>
         {formContent ? (
           <div className="border-t border-border bg-card/95 px-5 py-4">
@@ -406,7 +453,7 @@ export default function CommentSection({
   }
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4" aria-busy={initialLoading || refreshing}>
       {commentHeader}
       {renderForm()}
       {renderList()}

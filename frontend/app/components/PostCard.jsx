@@ -222,21 +222,21 @@ export default function PostCard({
   return (
     <article className="card overflow-hidden">
       <div className={`card-header ${compact ? "px-4 py-3" : ""}`}>
-        <div>
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-foreground">
+            <span className="break-words text-sm font-semibold text-foreground">
               {postOwnerName ? `@${postOwnerName}` : "anonymous"}
             </span>
             {ownerMeta ? (
-              <span className="text-xs text-muted-foreground">{ownerMeta}</span>
+              <span className="break-words text-xs text-muted-foreground">{ownerMeta}</span>
             ) : null}
           </div>
-          <h3 className="text-lg font-semibold text-foreground">{displayName}</h3>
+          <h3 className="break-words text-lg font-semibold text-foreground">{displayName}</h3>
           {post.caption ? (
-            <p className="mt-1 text-sm text-muted-foreground">{post.caption}</p>
+            <p className="mt-1 break-words text-sm text-muted-foreground">{post.caption}</p>
           ) : null}
         </div>
-        <div className="flex flex-col items-start gap-2 sm:items-end">
+        <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
           {formattedDate ? (
             <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-mono">
               {formattedDate}

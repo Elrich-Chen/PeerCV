@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from sqlalchemy import select, update
+import logging
+
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 from sqlalchemy.orm import joinedload
@@ -9,6 +11,8 @@ from data.schemas import Post
 from app.images import imagekit
 
 from auth.users import auth_backend, current_active_user, fastapi_users
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -306,11 +310,22 @@ async def delete_post(
         if user.id != post.user_id:
             raise HTTPException(status_code=403, detail="Post not found")
 
-        if post.imagekit_file_id:
-            imagekit.files.delete(post.imagekit_file_id)
-
+        # Ratings reference posts.id without ORM cascade — delete them first or commit fails.
+        # Never call ImageKit before DB commit: if commit fails, you'd orphan the DB row but lose the file.
+        imagekit_file_id = post.imagekit_file_id
+        await session.execute(delete(Rating).where(Rating.post_id == post_uuid))
         await session.delete(post)
         await session.commit()
+
+        if imagekit_file_id:
+            try:
+                imagekit.files.delete(imagekit_file_id)
+            except Exception as exc:
+                logger.warning(
+                    "Post %s removed from DB but ImageKit delete failed: %s",
+                    post_uuid,
+                    exc,
+                )
 
         return {"success": True, "message": "Post deleted successfully"}
     except HTTPException:
