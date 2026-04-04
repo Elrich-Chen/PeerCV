@@ -8,6 +8,8 @@ import FeatureGrid from "./components/FeatureGrid";
 export default function HomePage() {
   const [previewAvailable, setPreviewAvailable] = useState(true);
   const [shouldLoadPreview, setShouldLoadPreview] = useState(false);
+  /** false = starting position for slide-up; never use opacity-0 here or the page looks blank. */
+  const [heroReady, setHeroReady] = useState(false);
   const appendPdfControls = (fileUrl) => {
     if (!fileUrl) {
       return fileUrl;
@@ -46,6 +48,18 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setHeroReady(true);
+      return undefined;
+    }
+    const t = window.setTimeout(() => setHeroReady(true), 24);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
     if (!shouldLoadPreview) {
       return undefined;
     }
@@ -80,11 +94,21 @@ export default function HomePage() {
   const previewName = previewAvailable ? "Sample resume" : "";
   const previewCaption = previewAvailable ? "Example resume preview." : "";
 
+  const stagger = (delayMs) => ({
+    className: `opacity-100 transition-transform duration-700 ease-out will-change-transform ${
+      heroReady ? "translate-y-0" : "translate-y-8"
+    }`,
+    style: { transitionDelay: `${delayMs}ms` },
+  });
+
   return (
     <div className="space-y-16">
       <section className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-6">
-          <div className="inline-flex items-center gap-3 rounded-full border border-border bg-muted px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-muted-foreground font-mono">
+          <div
+            className={`inline-flex items-center gap-3 rounded-full border border-border bg-muted px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-muted-foreground font-mono ${stagger(0).className}`}
+            style={stagger(0).style}
+          >
             <span className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full bg-sky-400"></span>
               <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
@@ -92,37 +116,55 @@ export default function HomePage() {
             </span>
             Three-step review flow
           </div>
-          <h1 className="text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl">
+          <h1
+            className={`text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-6xl ${stagger(90).className}`}
+            style={stagger(90).style}
+          >
             Get your <span className="text-accent">resume reviewed</span> by the
             people who matter.
           </h1>
-          <p className="max-w-xl text-sm text-muted-foreground sm:text-base">
+          <p
+            className={`max-w-xl text-sm text-muted-foreground sm:text-base ${stagger(180).className}`}
+            style={stagger(180).style}
+          >
             A focused, community-first space for resume feedback. Upload once,
             preview instantly, and keep discussion tied to the work.
           </p>
-          <ul className="space-y-3 text-sm text-muted-foreground">
+          <ul
+            className={`space-y-3 text-sm text-muted-foreground ${stagger(270).className}`}
+            style={stagger(270).style}
+          >
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 text-accent" />
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
               <span>Share resumes with a clean preview that stays on page.</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 text-accent" />
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
               <span>Threaded comments keep feedback structured and readable.</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 text-accent" />
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
               <span>Browse the community anytime without logging in.</span>
             </li>
           </ul>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link className="btn-primary" href="/login">
-              Get started <ArrowRight className="h-4 w-4" />
+          <div
+            className={`flex flex-wrap items-center gap-3 ${stagger(360).className}`}
+            style={stagger(360).style}
+          >
+            <Link className="btn-hero-primary" href="/login">
+              <span className="relative z-[1] inline-flex items-center gap-2">
+                Get started
+                <ArrowRight className="h-4 w-4" />
+              </span>
             </Link>
-            <Link className="btn-ghost" href="/upload">
-              Upload a resume
+            <Link className="btn-hero-ghost" href="/upload">
+              <span className="relative z-[1]">Upload a resume</span>
             </Link>
           </div>
-          <div className="flex flex-wrap items-center gap-6 text-xs text-muted-foreground">
+          <div
+            className={`flex flex-wrap items-center gap-6 text-xs text-muted-foreground ${stagger(450).className}`}
+            style={stagger(450).style}
+          >
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 text-accent">
                 {Array.from({ length: 5 }).map((_, index) => (
@@ -137,7 +179,11 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        <div id="preview" className="relative mt-6 scroll-mt-40">
+        <div
+          id="preview"
+          className={`relative mt-6 scroll-mt-40 ${stagger(120).className}`}
+          style={stagger(120).style}
+        >
           <div className="absolute -inset-6 rounded-[32px] bg-gradient-to-br from-accent/20 via-transparent to-transparent blur-2xl opacity-60"></div>
           <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
             <div className="flex items-center justify-between border-b border-border bg-muted px-4 py-3">
@@ -177,9 +223,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      <FeatureGrid />
+      <div className={stagger(520).className} style={stagger(520).style}>
+        <FeatureGrid />
+      </div>
 
-      <section className="rounded-2xl border border-border bg-card/40 px-6 py-6">
+      <section
+        className={`rounded-2xl border border-border bg-card/40 px-6 py-6 ${stagger(600).className}`}
+        style={stagger(600).style}
+      >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-mono">

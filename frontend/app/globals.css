@@ -64,6 +64,138 @@
     @apply inline-flex items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground transition hover:border-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50;
   }
 
+  @keyframes hero-cta-neon-sweep {
+    0% {
+      transform: translateX(-115%);
+    }
+    100% {
+      transform: translateX(260%);
+    }
+  }
+
+  @keyframes hero-cta-glow-pulse {
+    0%,
+    100% {
+      box-shadow:
+        0 0 18px rgba(255, 61, 0, 0.28),
+        0 0 44px rgba(255, 61, 0, 0.1);
+    }
+    50% {
+      box-shadow:
+        0 0 30px rgba(255, 61, 0, 0.48),
+        0 0 72px rgba(255, 61, 0, 0.2);
+    }
+  }
+
+  @keyframes hero-cta-glow-pulse-hover {
+    0%,
+    100% {
+      box-shadow:
+        0 0 22px rgba(255, 61, 0, 0.4),
+        0 0 52px rgba(255, 61, 0, 0.14);
+    }
+    50% {
+      box-shadow:
+        0 0 38px rgba(255, 61, 0, 0.62),
+        0 0 88px rgba(255, 61, 0, 0.26);
+    }
+  }
+
+  /* Home hero primary: idle glow pulse + continuous L→R neon sweep (::after); hover speeds both */
+  .btn-hero-primary {
+    @apply relative isolate inline-flex items-center justify-center gap-2 overflow-hidden rounded-md border border-orange-500/30 bg-accent px-4 py-2 text-sm font-semibold text-[#feebdb];
+    animation: hero-cta-glow-pulse 2.6s ease-in-out infinite;
+  }
+
+  .btn-hero-primary:hover {
+    animation-name: hero-cta-glow-pulse-hover;
+    animation-duration: 1.65s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  .btn-hero-primary:focus-visible {
+    outline: none;
+    animation: none;
+    box-shadow:
+      0 0 24px rgba(255, 61, 0, 0.38),
+      0 0 0 2px var(--background),
+      0 0 0 4px rgba(255, 61, 0, 0.65);
+  }
+
+  /* Neon band: loops left → right forever (not hover-only). */
+  .btn-hero-primary::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 0;
+    width: 55%;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 180, 150, 0.2) 20%,
+      rgba(255, 90, 50, 0.85) 50%,
+      rgba(255, 200, 170, 0.35) 80%,
+      transparent 100%
+    );
+    opacity: 0.9;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    animation: hero-cta-neon-sweep 2.2s linear infinite;
+  }
+
+  .btn-hero-primary:hover::after,
+  .btn-hero-primary:focus-visible::after {
+    animation-duration: 1.2s;
+    opacity: 1;
+  }
+
+  /* Home hero only: dark outline CTA — same sweep, no glow */
+  .btn-hero-ghost {
+    @apply relative isolate inline-flex items-center justify-center gap-2 overflow-hidden rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground;
+    transition: border-color 0.25s ease, color 0.25s ease, background-color 0.25s ease;
+  }
+
+  .btn-hero-ghost:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--background), 0 0 0 4px rgba(255, 61, 0, 0.45);
+  }
+
+  .btn-hero-ghost:hover,
+  .btn-hero-ghost:focus-visible {
+    @apply text-foreground;
+    border-color: rgba(255, 61, 0, 0.55);
+    background-color: rgba(26, 26, 26, 0.95);
+  }
+
+  .btn-hero-ghost::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 0;
+    width: 55%;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 61, 0, 0.12) 25%,
+      rgba(255, 61, 0, 0.55) 50%,
+      rgba(255, 61, 0, 0.15) 75%,
+      transparent 100%
+    );
+    opacity: 0.7;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    animation: hero-cta-neon-sweep 2.4s linear infinite;
+  }
+
+  .btn-hero-ghost:hover::after,
+  .btn-hero-ghost:focus-visible::after {
+    animation-duration: 1.3s;
+    opacity: 0.95;
+  }
+
   .btn-danger {
     @apply inline-flex items-center justify-center gap-2 rounded-md border border-red-500/50 px-3 py-2 text-sm text-white transition hover:bg-red-500/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50;
   }
@@ -74,10 +206,11 @@
 }
 
 @layer utilities {
-  @keyframes page-enter {
+  /* Client-side navigations only (see PageTransition): subtle fade + slide, not full opacity-0. */
+  @keyframes page-route-in {
     from {
-      opacity: 0;
-      transform: translateY(14px);
+      opacity: 0.88;
+      transform: translateY(12px);
     }
     to {
       opacity: 1;
@@ -85,8 +218,8 @@
     }
   }
 
-  .page-enter {
-    animation: page-enter 360ms cubic-bezier(0.25, 0, 0, 1);
+  .page-route-transition {
+    animation: page-route-in 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
     will-change: opacity, transform;
   }
 
@@ -133,8 +266,10 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .page-enter {
+    .page-route-transition {
       animation: none;
+      opacity: 1;
+      transform: none;
     }
     .ticker-track {
       animation: none;
@@ -142,6 +277,15 @@
     }
     .skeleton-shimmer::after {
       animation: none;
+    }
+    .btn-hero-primary::after,
+    .btn-hero-ghost::after {
+      animation: none !important;
+      opacity: 0 !important;
+    }
+    .btn-hero-primary {
+      animation: none;
+      box-shadow: 0 0 16px rgba(255, 61, 0, 0.22);
     }
   }
 }
