@@ -12,10 +12,11 @@ import {
   onAuthChange,
   validateSession,
 } from "../auth";
+import type { AuthUser } from "../types";
 
 export default function Navbar() {
   const [token, setToken] = useState("");
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const updateId = "upload-fix-2026-01-07";
   const [showUpdate, setShowUpdate] = useState(true);
   const [isHidden, setIsHidden] = useState(false);
@@ -80,7 +81,7 @@ export default function Navbar() {
     }
   }, [updateId]);
 
-  const navItemClass = (href) =>
+  const navItemClass = (href: string): string =>
     [
       "inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs transition sm:px-4 sm:text-sm",
       "whitespace-nowrap",

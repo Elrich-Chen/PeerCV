@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import "./globals.css";
 import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
@@ -18,7 +20,7 @@ const jetBrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Peer-CV",
   description: "Resume community for peer reviews",
   icons: {
@@ -28,7 +30,11 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+interface RootLayoutProps {
+  children: ReactNode;
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"

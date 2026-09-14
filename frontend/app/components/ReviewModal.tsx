@@ -14,8 +14,24 @@ import {
 import { toast } from "sonner";
 import CommentSection from "./CommentSection";
 import { getAuthUser } from "../auth";
+import type { Post } from "../types";
 
-const appendPdfControls = (fileUrl) => {
+/** Post may include a legacy top-level username from older API payloads. */
+type ReviewPost = Post & { username?: string };
+
+interface ReviewModalProps {
+  post: ReviewPost | null;
+  apiBase: string;
+  token: string;
+  onClose: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+  hasPrev: boolean;
+  hasNext: boolean;
+  onDeleted?: (postId: string) => void;
+}
+
+const appendPdfControls = (fileUrl: string): string => {
   if (!fileUrl) {
     return fileUrl;
   }
@@ -25,9 +41,13 @@ const appendPdfControls = (fileUrl) => {
   return `${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`;
 };
 
-const getPdfViewerUrl = (fileUrl) => appendPdfControls(fileUrl);
+const getPdfViewerUrl = (fileUrl: string): string => appendPdfControls(fileUrl);
 
-const getPreviewUrl = (fileUrl, fileType, fileName) => {
+const getPreviewUrl = (
+  fileUrl: string | null | undefined,
+  fileType: string | null | undefined,
+  fileName: string | null | undefined
+): string | null => {
   if (!fileUrl) {
     return null;
   }
@@ -62,7 +82,7 @@ const getPreviewUrl = (fileUrl, fileType, fileName) => {
   return null;
 };
 
-const extractFileName = (value) => {
+const extractFileName = (value: string | null | undefined): string => {
   if (!value) {
     return "";
   }
@@ -75,7 +95,7 @@ const extractFileName = (value) => {
   }
 };
 
-const cleanFileName = (value) => {
+const cleanFileName = (value: string | null | undefined): string => {
   if (!value) {
     return "Untitled resume";
   }
@@ -98,7 +118,7 @@ const cleanFileName = (value) => {
   return value;
 };
 
-const formatPostDate = (value) => {
+const formatPostDate = (value: string | null | undefined): string => {
   if (!value) {
     return "";
   }
@@ -122,8 +142,8 @@ export default function ReviewModal({
   hasPrev,
   hasNext,
   onDeleted,
-}) {
-  const dialogRef = useRef(null);
+}: ReviewModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -145,8 +165,8 @@ export default function ReviewModal({
     if (typeof window === "undefined") {
       return undefined;
     }
-    const handleKey = (event) => {
-      const target = event.target;
+    const handleKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
       const isEditable =
         target &&
         (target.tagName === "INPUT" ||
@@ -184,7 +204,7 @@ export default function ReviewModal({
   const displayName = cleanFileName(
     post.file_name || extractFileName(post.url)
   );
-  const owner = post.owner || {};
+  const owner = post.owner || ({} as ReviewPost["owner"]);
   const postOwnerName = owner.username || post.username || "anonymous";
   const postHeadline = owner.headline || "";
   const postOrganization = owner.organization || "";
@@ -264,7 +284,7 @@ export default function ReviewModal({
       <button
         className="fixed right-4 top-4 z-[60] inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/95 text-muted-foreground shadow-[0_8px_20px_rgba(0,0,0,0.45)] transition hover:text-foreground"
         type="button"
-        onClick={(event) => {
+        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
           event.stopPropagation();
           onClose();
         }}
@@ -274,7 +294,7 @@ export default function ReviewModal({
       </button>
       <div
         className="relative h-full w-full max-w-6xl overflow-hidden rounded-2xl border border-border bg-background shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
-        onClick={(event) => event.stopPropagation()}
+        onClick={(event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
@@ -283,7 +303,7 @@ export default function ReviewModal({
         <button
           className="absolute left-2 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/90 text-muted-foreground transition hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
           type="button"
-          onClick={(event) => {
+          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
             event.stopPropagation();
             onPrev();
           }}
@@ -296,7 +316,7 @@ export default function ReviewModal({
         <button
           className="absolute right-2 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/90 text-muted-foreground transition hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
           type="button"
-          onClick={(event) => {
+          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
             event.stopPropagation();
             onNext();
           }}

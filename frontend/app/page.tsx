@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Star } from "lucide-react";
 import FeatureGrid from "./components/FeatureGrid";
@@ -10,7 +10,7 @@ export default function HomePage() {
   const [shouldLoadPreview, setShouldLoadPreview] = useState(false);
   /** false = starting position for slide-up; never use opacity-0 here or the page looks blank. */
   const [heroReady, setHeroReady] = useState(false);
-  const appendPdfControls = (fileUrl) => {
+  const appendPdfControls = (fileUrl: string): string => {
     if (!fileUrl) {
       return fileUrl;
     }
@@ -32,11 +32,19 @@ export default function HomePage() {
       }
     };
 
-    if ("requestIdleCallback" in window) {
-      const id = window.requestIdleCallback(startLoading, { timeout: 1000 });
+    // Feature-detect without `in` narrowing (DOM lib always includes ric → else is `never`).
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (
+        callback: IdleRequestCallback,
+        options?: IdleRequestOptions
+      ) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    if (typeof idleWindow.requestIdleCallback === "function") {
+      const id = idleWindow.requestIdleCallback(startLoading, { timeout: 1000 });
       return () => {
         cancelled = true;
-        window.cancelIdleCallback?.(id);
+        idleWindow.cancelIdleCallback?.(id);
       };
     }
 
@@ -94,7 +102,9 @@ export default function HomePage() {
   const previewName = previewAvailable ? "Sample resume" : "";
   const previewCaption = previewAvailable ? "Example resume preview." : "";
 
-  const stagger = (delayMs) => ({
+  const stagger = (
+    delayMs: number
+  ): { className: string; style: CSSProperties } => ({
     className: `opacity-100 transition-transform duration-700 ease-out will-change-transform ${
       heroReady ? "translate-y-0" : "translate-y-8"
     }`,

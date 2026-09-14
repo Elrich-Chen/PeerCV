@@ -6,22 +6,23 @@ import { Medal, Star, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { DEFAULT_API_URL } from "../auth";
 import { LeaderboardSkeleton } from "./LoadingSkeleton";
+import type { Post } from "../types";
 
-const formatRating = (value) => {
+const formatRating = (value: number | null | undefined): string => {
   if (typeof value !== "number") {
     return "New";
   }
   return value.toFixed(1);
 };
 
-const formatVotes = (value) => {
+const formatVotes = (value: number | null | undefined): string => {
   if (typeof value !== "number") {
     return "0 votes";
   }
   return value === 1 ? "1 vote" : `${value} votes`;
 };
 
-const appendPdfControls = (fileUrl) => {
+const appendPdfControls = (fileUrl: string): string => {
   if (!fileUrl) {
     return fileUrl;
   }
@@ -31,9 +32,13 @@ const appendPdfControls = (fileUrl) => {
   return `${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`;
 };
 
-const getPdfViewerUrl = (fileUrl) => appendPdfControls(fileUrl);
+const getPdfViewerUrl = (fileUrl: string): string => appendPdfControls(fileUrl);
 
-const getPreviewUrl = (fileUrl, fileType, fileName) => {
+const getPreviewUrl = (
+  fileUrl: string | null | undefined,
+  fileType: string | null | undefined,
+  fileName: string | null | undefined
+): string | null => {
   if (!fileUrl) {
     return null;
   }
@@ -67,7 +72,7 @@ const getPreviewUrl = (fileUrl, fileType, fileName) => {
 };
 
 
-const extractFileName = (value) => {
+const extractFileName = (value: string | null | undefined): string => {
   if (!value) {
     return "";
   }
@@ -80,7 +85,7 @@ const extractFileName = (value) => {
   }
 };
 
-const cleanFileName = (value) => {
+const cleanFileName = (value: string | null | undefined): string => {
   if (!value) {
     return "Untitled resume";
   }
@@ -104,9 +109,9 @@ const cleanFileName = (value) => {
 };
 
 export default function Leaderboard() {
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedPreviewId, setExpandedPreviewId] = useState(null);
+  const [expandedPreviewId, setExpandedPreviewId] = useState<string | null>(null);
 
   const loadLeaderboard = async () => {
     setLoading(true);
@@ -120,8 +125,8 @@ export default function Leaderboard() {
         const text = await response.text();
         throw new Error(text || "Failed to load leaderboard.");
       }
-      const data = await response.json();
-      setPosts(Array.isArray(data) ? data : []);
+      const data: unknown = await response.json();
+      setPosts(Array.isArray(data) ? (data as Post[]) : []);
     } catch (error) {
       toast.error("Could not load leaderboard.");
     } finally {

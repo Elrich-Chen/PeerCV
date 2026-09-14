@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DEFAULT_API_URL, getToken, onAuthChange, validateSession } from "../auth";
 
+type UploadStatus = {
+  type: "info" | "success" | "error";
+  message: string;
+};
+
 export default function UploadPage() {
   const router = useRouter();
   const [token, setToken] = useState("");
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState(null);
-  const fileRef = useRef(null);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const inFlightRef = useRef(false);
 
   const apiBase = DEFAULT_API_URL;
@@ -35,7 +40,7 @@ export default function UploadPage() {
     });
   }, [token, apiBase]);
 
-  const handleUpload = async (event) => {
+  const handleUpload = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (uploading || uploadStatus?.type === "success") {

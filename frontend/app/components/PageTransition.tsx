@@ -1,15 +1,19 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+
+interface PageTransitionProps {
+  children: ReactNode;
+}
 
 /**
  * Route transition when navigating client-side (e.g. Home → Community).
  * The first page you land on is not animated so nothing feels hidden.
  */
-export default function PageTransition({ children }) {
+export default function PageTransition({ children }: PageTransitionProps) {
   const pathname = usePathname();
-  const prevPathRef = useRef(null);
+  const prevPathRef = useRef<string | null>(null);
   const [transitionCount, setTransitionCount] = useState(0);
 
   useEffect(() => {

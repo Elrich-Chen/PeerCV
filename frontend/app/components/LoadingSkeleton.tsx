@@ -1,6 +1,12 @@
 "use client";
 
-export function SkeletonBlock({ className = "", ...props }) {
+import type { HTMLAttributes } from "react";
+
+interface SkeletonBlockProps extends HTMLAttributes<HTMLDivElement> {
+  className?: string;
+}
+
+export function SkeletonBlock({ className = "", ...props }: SkeletonBlockProps) {
   return (
     <div
       className={`skeleton-shimmer ${className}`}
@@ -30,7 +36,11 @@ function FeedCardSkeleton() {
   );
 }
 
-export function FeedGridSkeleton({ count = 8 }) {
+interface FeedGridSkeletonProps {
+  count?: number;
+}
+
+export function FeedGridSkeleton({ count = 8 }: FeedGridSkeletonProps) {
   return (
     <div
       className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
