@@ -6,8 +6,29 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getAuthUser } from "../auth";
 import { CommentListSkeleton } from "./LoadingSkeleton";
+import type { Comment, UserPublic } from "../types";
 
-const formatTimestamp = (value) => {
+/** Comment plus UI-only / wire-format extras used in this component. */
+type CommentItem = Comment & {
+  created_at?: string;
+  optimistic?: boolean;
+  username?: string;
+};
+
+type ReplyTarget = {
+  id: string;
+  username: string;
+};
+
+interface CommentSectionProps {
+  postId: string;
+  apiBase: string;
+  token: string;
+  onCountChange?: (count: number) => void;
+  layout?: "default" | "modal";
+}
+
+const formatTimestamp = (value: string | null | undefined): string => {
   const date = value ? new Date(value) : new Date();
   if (Number.isNaN(date.getTime())) {
     return new Date().toLocaleString(undefined, {
@@ -21,8 +42,10 @@ const formatTimestamp = (value) => {
   });
 };
 
-const getOwnerDetails = (item) => {
-  const owner = item?.owner || {};
+const getOwnerDetails = (
+  item: CommentItem | null | undefined
+): { username: string; headline: string } => {
+  const owner: Partial<UserPublic> = item?.owner || {};
   return {
     username: owner.username || item?.username || "",
     headline: owner.headline || "",
@@ -35,14 +58,14 @@ export default function CommentSection({
   token,
   onCountChange,
   layout = "default",
-}) {
-  const [comments, setComments] = useState([]);
+}: CommentSectionProps) {
+  const [comments, setComments] = useState<CommentItem[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [body, setBody] = useState("");
-  const [replyTo, setReplyTo] = useState(null);
+  const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const textareaRef = useRef(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isModal = layout === "modal";
 
   const isReady = body.trim().length > 0;
@@ -56,7 +79,7 @@ export default function CommentSection({
     return "btn-ghost text-muted-foreground";
   }, [isReady]);
 
-  const commentCardClass = (optimistic) =>
+  const commentCardClass = (optimistic: boolean | undefined) =>
     [
       "rounded-xl border border-border px-4 py-3",
       isModal ? "bg-muted/30" : "bg-background",
@@ -64,14 +87,14 @@ export default function CommentSection({
     ].join(" ");
 
   const commentsByParent = useMemo(() => {
-    const map = new Map();
+    const map = new Map<string, CommentItem[]>();
     comments.forEach((comment) => {
       const parentId = comment.parent_comment_id || null;
       const key = parentId ? String(parentId) : "root";
       if (!map.has(key)) {
         map.set(key, []);
       }
-      map.get(key).push(comment);
+      map.get(key)!.push(comment);
     });
     return map;
   }, [comments]);
@@ -89,12 +112,14 @@ export default function CommentSection({
       if (!response.ok) {
         throw new Error("Failed to load comments.");
       }
-      const data = await response.json();
+      const data: unknown = await response.json();
       const fallbackTimestamp = new Date().toISOString();
-      const normalized = (Array.isArray(data) ? data : []).map((comment) => ({
-        ...comment,
-        created_at: comment.created_at || fallbackTimestamp,
-      }));
+      const normalized = (Array.isArray(data) ? data : []).map(
+        (comment: CommentItem) => ({
+          ...comment,
+          created_at: comment.created_at || fallbackTimestamp,
+        })
+      );
       setComments(normalized);
     } catch (error) {
       toast.error("Could not load comments.");
@@ -126,14 +151,14 @@ export default function CommentSection({
     }
   }, [comments, onCountChange]);
 
-  const handleInput = (event) => {
-    setBody(event.target.value);
-    const el = event.target;
+  const handleInput = (event: React.FormEvent<HTMLTextAreaElement>) => {
+    const el = event.currentTarget;
+    setBody(el.value);
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!token) {
@@ -152,7 +177,7 @@ export default function CommentSection({
       created_at: new Date().toISOString(),
       parent_comment_id: replyTo?.id || null,
       optimistic: true,
-    };
+    } as CommentItem;
 
     setComments((prev) => [optimistic, ...prev]);
     setBody("");
@@ -191,7 +216,7 @@ export default function CommentSection({
     }
   };
 
-  const handleDelete = async (commentId) => {
+  const handleDelete = async (commentId: string) => {
     if (!token) {
       toast.error("Sign in to delete comments.");
       return;
@@ -222,7 +247,7 @@ export default function CommentSection({
     }
   };
 
-  const handleReply = (comment) => {
+  const handleReply = (comment: CommentItem) => {
     const ownerDetails = getOwnerDetails(comment);
     setReplyTo({
       id: comment.id,
@@ -233,7 +258,7 @@ export default function CommentSection({
     }
   };
 
-  const renderThread = (comment, depth = 0) => {
+  const renderThread = (comment: CommentItem, depth = 0): React.ReactNode => {
     const commentId = String(comment.id);
     const replies = commentsByParent.get(commentId) || [];
     const hasIndent = depth > 0;

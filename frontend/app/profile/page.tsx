@@ -6,13 +6,14 @@ import { toast } from "sonner";
 import { DEFAULT_API_URL, getToken, onAuthChange, validateSession } from "../auth";
 import PostCard from "../components/PostCard";
 import { ProfilePostListSkeleton } from "../components/LoadingSkeleton";
+import type { Post } from "../types";
 
 export default function ProfilePage() {
   const [token, setToken] = useState("");
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEmpty, setIsEmpty] = useState(false);
-  const [rankMap, setRankMap] = useState({});
+  const [rankMap, setRankMap] = useState<Record<string, number>>({});
 
   const apiBase = DEFAULT_API_URL;
 
@@ -42,8 +43,8 @@ export default function ProfilePage() {
         throw new Error(text || "Failed to load posts.");
       }
 
-      const data = await response.json();
-      setPosts(Array.isArray(data) ? data : []);
+      const data: unknown = await response.json();
+      setPosts(Array.isArray(data) ? (data as Post[]) : []);
       setIsEmpty(Array.isArray(data) && data.length === 0);
     } catch (error) {
       toast.error("Could not load your posts.");
@@ -67,9 +68,9 @@ export default function ProfilePage() {
       if (!response.ok) {
         throw new Error("Failed to load leaderboard.");
       }
-      const data = await response.json();
-      const list = Array.isArray(data) ? data : [];
-      const nextMap = {};
+      const data: unknown = await response.json();
+      const list = Array.isArray(data) ? (data as Post[]) : [];
+      const nextMap: Record<string, number> = {};
       list.forEach((post, index) => {
         if (post?.post_id) {
           nextMap[String(post.post_id)] = index + 1;
@@ -108,7 +109,7 @@ export default function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const handleDeleted = (postId) => {
+  const handleDeleted = (postId: string) => {
     setPosts((prev) => prev.filter((post) => post.post_id !== postId));
     setRankMap((prev) => {
       if (!prev[postId]) {

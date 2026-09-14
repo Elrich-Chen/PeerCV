@@ -1,16 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   DEFAULT_API_URL,
   normalizeUrl,
   setAuthSession,
 } from "../auth";
+import type { User } from "../types";
 
-const parseJsonResponse = async (response) => {
+type AuthMode = "login" | "register";
+type ProfileRole = "student" | "professional";
+type StatusMessage = {
+  type: "error" | "success";
+  message: string;
+};
+
+type LoginTokenResponse = {
+  access_token?: string;
+  detail?: string;
+  message?: string;
+};
+
+type RegisterPayload = {
+  email: string;
+  password: string;
+  username: string;
+  profile_type: ProfileRole;
+  organization?: string;
+  program?: string;
+  year_of_study?: string;
+  job_title?: string;
+};
+
+const parseJsonResponse = async <T = unknown>(
+  response: Response
+): Promise<T> => {
   const text = await response.text();
-  let data = null;
+  let data: unknown = null;
 
   if (text) {
     try {
@@ -21,40 +48,46 @@ const parseJsonResponse = async (response) => {
   }
 
   if (!response.ok) {
-    const detail = data?.detail || data?.message;
+    const record =
+      data && typeof data === "object"
+        ? (data as { detail?: string; message?: string })
+        : null;
+    const detail = record?.detail || record?.message;
     throw new Error(detail || `Request failed (${response.status})`);
   }
 
-  return data;
+  return data as T;
 };
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState("login");
+  const [mode, setMode] = useState<AuthMode>("login");
   const [loginIdentity, setLoginIdentity] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [registerUsername, setRegisterUsername] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
-  const [registerRole, setRegisterRole] = useState("student");
+  const [registerRole, setRegisterRole] = useState<ProfileRole>("student");
   const [registerSchool, setRegisterSchool] = useState("");
   const [registerProgram, setRegisterProgram] = useState("");
   const [registerYear, setRegisterYear] = useState("");
   const [registerOrganization, setRegisterOrganization] = useState("");
   const [registerJobTitle, setRegisterJobTitle] = useState("");
   const [registerStep, setRegisterStep] = useState(1);
-  const [loginStatus, setLoginStatus] = useState(null);
-  const [registerStatus, setRegisterStatus] = useState(null);
+  const [loginStatus, setLoginStatus] = useState<StatusMessage | null>(null);
+  const [registerStatus, setRegisterStatus] = useState<StatusMessage | null>(
+    null
+  );
   const [loginLoading, setLoginLoading] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
 
   const baseUrl = normalizeUrl(DEFAULT_API_URL);
-  const toggleClass = (isActive) =>
+  const toggleClass = (isActive: boolean): string =>
     [
       isActive ? "btn-primary" : "btn-ghost",
       "rounded-full px-5",
     ].join(" ");
-  const profileToggleClass = (isActive) =>
+  const profileToggleClass = (isActive: boolean): string =>
     [
       "rounded-full px-5 py-2 text-sm transition",
       isActive
@@ -62,7 +95,10 @@ export default function LoginPage() {
         : "border border-border text-muted-foreground hover:text-foreground hover:bg-muted",
     ].join(" ");
 
-  const loginWithCredentials = async (identity, password) => {
+  const loginWithCredentials = async (
+    identity: string,
+    password: string
+  ): Promise<string> => {
     if (!baseUrl) {
       throw new Error("Enter an API base URL.");
     }
@@ -79,7 +115,7 @@ export default function LoginPage() {
       body: formBody.toString(),
     });
 
-    const data = await parseJsonResponse(response);
+    const data = await parseJsonResponse<LoginTokenResponse>(response);
     const token = data?.access_token;
     if (!token) {
       throw new Error("Login response missing access token.");
@@ -87,7 +123,7 @@ export default function LoginPage() {
     return token;
   };
 
-  const fetchUser = async (token) => {
+  const fetchUser = async (token: string): Promise<User | null> => {
     if (!baseUrl) {
       return null;
     }
@@ -102,10 +138,10 @@ export default function LoginPage() {
       return null;
     }
 
-    return parseJsonResponse(response);
+    return parseJsonResponse<User>(response);
   };
 
-  const handleLogin = async (event) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoginStatus(null);
 
@@ -128,13 +164,16 @@ export default function LoginPage() {
       setLoginStatus({ type: "success", message: "Signed in." });
       router.push("/feed");
     } catch (error) {
-      setLoginStatus({ type: "error", message: `Login failed: ${error.message}` });
+      setLoginStatus({
+        type: "error",
+        message: `Login failed: ${(error as Error).message}`,
+      });
     } finally {
       setLoginLoading(false);
     }
   };
 
-  const handleRegister = async (event) => {
+  const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setRegisterStatus(null);
 
@@ -179,7 +218,7 @@ export default function LoginPage() {
     }
 
     try {
-      const payload = {
+      const payload: RegisterPayload = {
         email: registerEmail.trim(),
         password: registerPassword,
         username: registerUsername.trim(),
@@ -220,14 +259,14 @@ export default function LoginPage() {
     } catch (error) {
       setRegisterStatus({
         type: "error",
-        message: `Registration failed: ${error.message}`,
+        message: `Registration failed: ${(error as Error).message}`,
       });
     } finally {
       setRegisterLoading(false);
     }
   };
 
-  const handleModeChange = (nextMode) => {
+  const handleModeChange = (nextMode: AuthMode) => {
     setMode(nextMode);
     setRegisterStep(1);
     setLoginStatus(null);

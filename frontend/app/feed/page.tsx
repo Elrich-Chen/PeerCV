@@ -7,19 +7,28 @@ import { toast } from "sonner";
 import { DEFAULT_API_URL, getToken, onAuthChange, validateSession } from "../auth";
 import ReviewModal from "../components/ReviewModal";
 import { FeedGridSkeleton } from "../components/LoadingSkeleton";
+import type { Post, UserPublic } from "../types";
+
+/** Wire posts may still carry a legacy top-level username. */
+type FeedPost = Post & { username?: string };
+
+type FeedCardProps = {
+  post: FeedPost;
+  index: number;
+};
 
 export default function FeedPage() {
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<FeedPost[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [token, setToken] = useState("");
-  const [activeIndex, setActiveIndex] = useState(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const lastUrlRef = useRef("");
-  const urlSyncRef = useRef(null);
+  const urlSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const apiBase = DEFAULT_API_URL;
 
-  const extractFileName = (value) => {
+  const extractFileName = (value: string | null | undefined): string => {
     if (!value) {
       return "";
     }
@@ -32,7 +41,7 @@ export default function FeedPage() {
     }
   };
 
-  const cleanFileName = (value) => {
+  const cleanFileName = (value: string | null | undefined): string => {
     if (!value) {
       return "Untitled resume";
     }
@@ -55,7 +64,7 @@ export default function FeedPage() {
     return value;
   };
 
-  const appendPdfControls = (fileUrl) => {
+  const appendPdfControls = (fileUrl: string): string => {
     if (!fileUrl) {
       return fileUrl;
     }
@@ -65,9 +74,13 @@ export default function FeedPage() {
     return `${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`;
   };
 
-  const getPdfViewerUrl = (fileUrl) => appendPdfControls(fileUrl);
+  const getPdfViewerUrl = (fileUrl: string): string => appendPdfControls(fileUrl);
 
-  const getPreviewUrl = (fileUrl, fileType, fileName) => {
+  const getPreviewUrl = (
+    fileUrl: string | null | undefined,
+    fileType: string | null | undefined,
+    fileName: string | null | undefined
+  ): string | null => {
     if (!fileUrl) {
       return null;
     }
@@ -102,7 +115,11 @@ export default function FeedPage() {
     return null;
   };
 
-  const getPreviewImageUrl = (fileUrl, fileType, fileName) => {
+  const getPreviewImageUrl = (
+    fileUrl: string | null | undefined,
+    fileType: string | null | undefined,
+    fileName: string | null | undefined
+  ): string | null => {
     if (!fileUrl) {
       return null;
     }
@@ -131,7 +148,7 @@ export default function FeedPage() {
     }
   };
 
-  const formatPostDate = (value) => {
+  const formatPostDate = (value: string | null | undefined): string => {
     if (!value) {
       return "";
     }
@@ -145,7 +162,7 @@ export default function FeedPage() {
     });
   };
 
-  const sortByNewest = (items) => {
+  const sortByNewest = (items: FeedPost[]): FeedPost[] => {
     return [...items].sort((a, b) => {
       const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
       const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -164,8 +181,8 @@ export default function FeedPage() {
       if (!response.ok) {
         throw new Error("Failed to load posts.");
       }
-      const data = await response.json();
-      const list = Array.isArray(data) ? data : [];
+      const data: unknown = await response.json();
+      const list = Array.isArray(data) ? (data as FeedPost[]) : [];
       setPosts(sortByNewest(list));
     } catch (error) {
       toast.error("Could not load the community.");
@@ -201,7 +218,7 @@ export default function FeedPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const getTargetIdFromLocation = () => {
+  const getTargetIdFromLocation = (): string | null => {
     if (typeof window === "undefined") {
       return null;
     }
@@ -298,7 +315,7 @@ export default function FeedPage() {
     }
   }, [activeIndex, posts]);
 
-  const handleDeleted = (postId) => {
+  const handleDeleted = (postId: string) => {
     setPosts((prev) => prev.filter((post) => post.post_id !== postId));
     if (activeIndex !== null && posts[activeIndex]?.post_id === postId) {
       setActiveIndex(null);
@@ -311,7 +328,7 @@ export default function FeedPage() {
   const handleClose = () => {
     setActiveIndex(null);
   };
-  const stepIndex = (delta) => {
+  const stepIndex = (delta: number) => {
     setActiveIndex((prev) => {
       if (typeof prev !== "number") {
         return prev;
@@ -324,8 +341,8 @@ export default function FeedPage() {
     });
   };
 
-  const FeedCard = ({ post, index }) => {
-    const cardRef = useRef(null);
+  const FeedCard = ({ post, index }: FeedCardProps) => {
+    const cardRef = useRef<HTMLButtonElement | null>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [imageFailed, setImageFailed] = useState(false);
 
@@ -368,7 +385,7 @@ export default function FeedPage() {
       : null;
     const shouldUseImage = previewImageUrl && !imageFailed;
 
-    const owner = post.owner || {};
+    const owner: Partial<UserPublic> = post.owner || {};
     const ownerMeta = [owner.headline, owner.organization]
       .filter(Boolean)
       .join(" • ");

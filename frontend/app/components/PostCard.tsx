@@ -5,8 +5,22 @@ import { FileText, Share2, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import CommentSection from "./CommentSection";
 import { getAuthUser } from "../auth";
+import type { Post } from "../types";
 
-const appendPdfControls = (fileUrl) => {
+/** Post may include a legacy top-level username from older API payloads. */
+type PostCardPost = Post & { username?: string };
+
+interface PostCardProps {
+  post: PostCardPost;
+  apiBase: string;
+  token: string;
+  onDeleted?: (postId: string) => void;
+  showRatingStats?: boolean;
+  rank?: number | null;
+  compact?: boolean;
+}
+
+const appendPdfControls = (fileUrl: string): string => {
   if (!fileUrl) {
     return fileUrl;
   }
@@ -16,9 +30,13 @@ const appendPdfControls = (fileUrl) => {
   return `${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`;
 };
 
-const getPdfViewerUrl = (fileUrl) => appendPdfControls(fileUrl);
+const getPdfViewerUrl = (fileUrl: string): string => appendPdfControls(fileUrl);
 
-const getPreviewUrl = (fileUrl, fileType, fileName) => {
+const getPreviewUrl = (
+  fileUrl: string | null | undefined,
+  fileType: string | null | undefined,
+  fileName: string | null | undefined
+): string | null => {
   if (!fileUrl) {
     return null;
   }
@@ -51,7 +69,11 @@ const getPreviewUrl = (fileUrl, fileType, fileName) => {
   return null;
 };
 
-const getPreviewImageUrl = (fileUrl, fileType, fileName) => {
+const getPreviewImageUrl = (
+  fileUrl: string | null | undefined,
+  fileType: string | null | undefined,
+  fileName: string | null | undefined
+): string | null => {
   if (!fileUrl) {
     return null;
   }
@@ -80,7 +102,7 @@ const getPreviewImageUrl = (fileUrl, fileType, fileName) => {
   }
 };
 
-const extractFileName = (value) => {
+const extractFileName = (value: string | null | undefined): string => {
   if (!value) {
     return "";
   }
@@ -93,7 +115,7 @@ const extractFileName = (value) => {
   }
 };
 
-const cleanFileName = (value) => {
+const cleanFileName = (value: string | null | undefined): string => {
   if (!value) {
     return "Untitled resume";
   }
@@ -124,8 +146,8 @@ export default function PostCard({
   showRatingStats = false,
   rank = null,
   compact = false,
-}) {
-  const [commentCount, setCommentCount] = useState(null);
+}: PostCardProps) {
+  const [commentCount, setCommentCount] = useState<number | null>(null);
   const [showPreview, setShowPreview] = useState(!compact);
   const [previewImageFailed, setPreviewImageFailed] = useState(false);
   const previewImageUrl = getPreviewImageUrl(
@@ -140,7 +162,7 @@ export default function PostCard({
   );
   const authUser = getAuthUser();
   const currentUsername = authUser?.username || authUser?.email || "";
-  const owner = post.owner || {};
+  const owner = post.owner || ({} as PostCardPost["owner"]);
   const postOwnerName = owner.username || post.username || "";
   const postHeadline = owner.headline || "";
   const postOrganization = owner.organization || "";

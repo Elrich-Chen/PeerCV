@@ -1,8 +1,11 @@
-export const normalizeUrl = (value = "") => value.trim().replace(/\/+$/, "");
+import type { AuthUser, User } from "./types";
+
+export const normalizeUrl = (value = ""): string =>
+  value.trim().replace(/\/+$/, "");
 
 const DEFAULT_API_FALLBACK = "http://localhost:8000";
 
-const resolveDefaultApiUrl = () => {
+const resolveDefaultApiUrl = (): string => {
   const envValue =
     typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_URL : "";
   return normalizeUrl(envValue || DEFAULT_API_FALLBACK);
@@ -13,17 +16,16 @@ const TOKEN_KEY = "authToken";
 const USER_KEY = "authUser";
 const AUTH_EVENT = "auth-changed";
 
+const isBrowser = (): boolean => typeof window !== "undefined";
 
-const isBrowser = () => typeof window !== "undefined";
-
-export const getToken = () => {
+export const getToken = (): string => {
   if (!isBrowser()) {
     return "";
   }
   return window.localStorage.getItem(TOKEN_KEY) || "";
 };
 
-export const getAuthUser = () => {
+export const getAuthUser = (): User | null => {
   if (!isBrowser()) {
     return null;
   }
@@ -32,20 +34,20 @@ export const getAuthUser = () => {
     return null;
   }
   try {
-    return JSON.parse(raw);
-  } catch (error) {
+    return JSON.parse(raw) as User;
+  } catch {
     return null;
   }
 };
 
-const notifyAuthChange = () => {
+const notifyAuthChange = (): void => {
   if (!isBrowser()) {
     return;
   }
   window.dispatchEvent(new Event(AUTH_EVENT));
 };
 
-export const setAuthSession = (token, user) => {
+export const setAuthSession = (token: string, user: User | null): void => {
   if (!isBrowser()) {
     return;
   }
@@ -64,7 +66,7 @@ export const setAuthSession = (token, user) => {
   notifyAuthChange();
 };
 
-export const clearAuthSession = () => {
+export const clearAuthSession = (): void => {
   if (!isBrowser()) {
     return;
   }
@@ -73,7 +75,7 @@ export const clearAuthSession = () => {
   notifyAuthChange();
 };
 
-export const onAuthChange = (handler) => {
+export const onAuthChange = (handler: () => void): (() => void) => {
   if (!isBrowser()) {
     return () => {};
   }
@@ -82,7 +84,9 @@ export const onAuthChange = (handler) => {
   return () => window.removeEventListener(AUTH_EVENT, listener);
 };
 
-export const validateSession = async (baseUrl) => {
+export const validateSession = async (
+  baseUrl: string
+): Promise<User | null> => {
   if (!isBrowser()) {
     return null;
   }
@@ -113,10 +117,10 @@ export const validateSession = async (baseUrl) => {
       return getAuthUser();
     }
 
-    const user = await response.json();
+    const user = (await response.json()) as AuthUser;
     setAuthSession(token, user);
     return user;
-  } catch (error) {
+  } catch {
     return getAuthUser();
   }
 };

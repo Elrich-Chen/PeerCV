@@ -7,10 +7,22 @@ import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { DEFAULT_API_URL, getToken, onAuthChange, validateSession } from "../auth";
 import { VotingQueueSkeleton } from "./LoadingSkeleton";
+import type { Post, UserPublic } from "../types";
 
-const ratingOptions = [1, 2, 3, 4, 5];
+const ratingOptions = [1, 2, 3, 4, 5] as const;
 
-const appendPdfControls = (fileUrl) => {
+/** Demo/preview post used when the user is not signed in. */
+type PreviewPost = {
+  owner: Partial<UserPublic>;
+  caption: string;
+  file_name: string;
+  url: string;
+  file_type: string;
+};
+
+type DisplayPost = Post | PreviewPost;
+
+const appendPdfControls = (fileUrl: string): string => {
   if (!fileUrl) {
     return fileUrl;
   }
@@ -20,9 +32,13 @@ const appendPdfControls = (fileUrl) => {
   return `${fileUrl}#view=Fit&toolbar=0&navpanes=0&scrollbar=0`;
 };
 
-const getPdfViewerUrl = (fileUrl) => appendPdfControls(fileUrl);
+const getPdfViewerUrl = (fileUrl: string): string => appendPdfControls(fileUrl);
 
-const getPreviewUrl = (fileUrl, fileType, fileName) => {
+const getPreviewUrl = (
+  fileUrl: string | null | undefined,
+  fileType: string | null | undefined,
+  fileName: string | null | undefined
+): string | null => {
   if (!fileUrl) {
     return null;
   }
@@ -55,7 +71,11 @@ const getPreviewUrl = (fileUrl, fileType, fileName) => {
   return null;
 };
 
-const getPreviewImageUrl = (fileUrl, fileType, fileName) => {
+const getPreviewImageUrl = (
+  fileUrl: string | null | undefined,
+  fileType: string | null | undefined,
+  fileName: string | null | undefined
+): string | null => {
   if (!fileUrl) {
     return null;
   }
@@ -84,7 +104,7 @@ const getPreviewImageUrl = (fileUrl, fileType, fileName) => {
   }
 };
 
-const extractFileName = (value) => {
+const extractFileName = (value: string | null | undefined): string => {
   if (!value) {
     return "";
   }
@@ -97,7 +117,7 @@ const extractFileName = (value) => {
   }
 };
 
-const cleanFileName = (value) => {
+const cleanFileName = (value: string | null | undefined): string => {
   if (!value) {
     return "Untitled resume";
   }
@@ -121,7 +141,7 @@ const cleanFileName = (value) => {
 };
 
 export default function VotingQueue() {
-  const [queue, setQueue] = useState([]);
+  const [queue, setQueue] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState("");
   const [hoverScore, setHoverScore] = useState(0);
@@ -155,8 +175,8 @@ export default function VotingQueue() {
         throw new Error(text || "Failed to load votes.");
       }
 
-      const data = await response.json();
-      setQueue(Array.isArray(data) ? data : []);
+      const data: unknown = await response.json();
+      setQueue(Array.isArray(data) ? (data as Post[]) : []);
     } catch (error) {
       toast.error("Could not load votes.");
     } finally {
@@ -186,7 +206,7 @@ export default function VotingQueue() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const handleRate = async (score) => {
+  const handleRate = async (score: number) => {
     if (!token) {
       toast.error("Sign in to rate resumes.");
       router.push("/login");
@@ -223,19 +243,18 @@ export default function VotingQueue() {
 
   const isPreviewOnly = !token;
   const current = queue[0] || null;
-  const displayPost =
-    current ||
-    {
-      owner: {
-        username: "jake",
-        headline: "Product Demo",
-        organization: "ResumeRoast",
-      },
-      caption: "Sign in to start voting on real resumes.",
-      file_name: "Jake_Ryan_Resume.pdf",
-      url: "/resume-preview.pdf",
-      file_type: "pdf",
-    };
+  const previewPost: PreviewPost = {
+    owner: {
+      username: "jake",
+      headline: "Product Demo",
+      organization: "ResumeRoast",
+    },
+    caption: "Sign in to start voting on real resumes.",
+    file_name: "Jake_Ryan_Resume.pdf",
+    url: "/resume-preview.pdf",
+    file_type: "pdf",
+  };
+  const displayPost: DisplayPost = current || previewPost;
   const owner = displayPost.owner || {};
   const ownerMeta = [owner.headline, owner.organization]
     .filter(Boolean)
@@ -254,13 +273,14 @@ export default function VotingQueue() {
   const displayName = cleanFileName(
     displayPost.file_name || extractFileName(displayPost.url)
   );
-  const scoreLabel = {
+  const scoreLabels: Record<number, string> = {
     1: "Pass",
     2: "Needs work",
     3: "Solid",
     4: "Strong",
     5: "Hire",
-  }[hoverScore];
+  };
+  const scoreLabel = scoreLabels[hoverScore];
   const previewKey = displayPost.url || "";
 
   useEffect(() => {
